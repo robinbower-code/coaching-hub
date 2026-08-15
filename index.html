@@ -120,7 +120,7 @@ main{max-width:var(--maxw); margin:0 auto; padding:30px 22px 40px; min-height:60
 .section-hd{display:flex; align-items:center; gap:11px; margin-bottom:12px}
 .section-hd .mk{width:40px; height:40px; border-radius:12px; display:grid; place-items:center; font-size:1.25rem}
 .section-hd h2{font-size:1.15rem}
-.mk.blue{background:var(--light-blue)} .mk.pink{background:var(--light-pink)} .mk.green{background:var(--light-green)} .mk.purple{background:var(--light-purple)}
+.mk.blue{background:var(--light-blue)} .mk.pink{background:var(--light-pink)} .mk.green{background:var(--light-green)} .mk.purple{background:var(--light-purple)} .mk.yellow{background:var(--light-yellow)}
 
 .rows{padding:6px 20px}
 .row{display:grid; grid-template-columns:170px 1fr; gap:12px; padding:11px 0; border-top:1px solid var(--border); align-items:baseline}
@@ -349,17 +349,24 @@ function vsGrade(ge,gradeStr){
   if(d>-2) return `<span class="vs near">${d} behind</span>`;
   return `<span class="vs down">${d} behind</span>`;
 }
+function editSection(emoji, mk, title, key, ph){
+  const val=store.get(key,"");
+  return `<div class="section"><div class="section-hd"><span class="mk ${mk}">${emoji}</span><h2>${title}</h2></div>
+    <div class="card editwrap"><textarea class="field" rows="4" data-edit="${key}" placeholder="${esc(ph)}">${esc(val)}</textarea></div></div>`;
+}
 function renderStudent(id){
   const st=byId(id);
   const host=document.getElementById("view-student");
   if(!st){host.innerHTML=`<button class="backlink" data-nav="students">← Back to Student Hub</button><p>Student not found.</p>`;return;}
+  const first=esc(st.name.split(' ')[0]);
   const rows=[
     ["Program", st.program?esc(st.program)+" Program":"—"],
-    ["Grade", "Grade "+esc(st.grade)],
+    ...(st.age?[["Age / grade", esc(st.age)+" years old · Grade "+esc(st.grade)]]:[["Grade","Grade "+esc(st.grade)]]),
     ["Squad", st.squad?esc(st.squad)+" Squad":"—"],
     ["Program advisor", esc(st.advisor||"—")],
     ["Enrolled", esc(st.enrolled||"—")],
-    ["Coaching", "First session "+esc(COACH_START)]
+    ["Coaching", "First session "+esc(COACH_START)],
+    ...(st.parent?[["Parent", esc(st.parent)+(st.pemail?' · <a href="mailto:'+esc(st.pemail)+'">'+esc(st.pemail)+'</a>':'')]]:[])
   ].map(r=>`<div class="row"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join("");
 
   let snap;
@@ -374,12 +381,12 @@ function renderStudent(id){
       <p class="note">Most recent MAP battery · tested ${esc(st.tested)}. ${esc(st.note||"")}</p>
     </div>`;
   } else {
-    const msg = PUBLIC ? "Academic snapshot is hidden in this public preview." : "No MAP scores yet — this student was added by you. Ask the assistant to “refresh the hub” to backfill their battery &amp; enrollment from Atlas.";
+    const msg = PUBLIC ? "Academic snapshot is hidden in this public preview." : "No MAP scores yet — added by you. Ask the assistant to refresh the hub to backfill from Atlas.";
     snap=`<div class="card snap"><p class="note">${msg}</p></div>`;
   }
 
-  const notes=store.get("notes_"+st.id,"");
   const goal=store.get("goal_"+st.id, st.focus?`Build steady confidence in ${st.focus}.`:"");
+  const notes=store.get("notes_"+st.id,"");
 
   host.innerHTML=`
     <button class="backlink" data-nav="students">← Back to Student Hub</button>
@@ -390,20 +397,34 @@ function renderStudent(id){
 
     <div class="section"><div class="section-hd"><span class="mk blue">📊</span><h2>Academic snapshot</h2></div>${snap}</div>
 
-    <div class="section"><div class="section-hd"><span class="mk pink">💬</span><h2>Coaching notes &amp; talking points</h2></div>
+    ${editSection("❤️","pink","What motivates them","mot_"+st.id,"Rewards that land · interests & hobbies · what gets "+st.name.split(' ')[0]+" engaged…")}
+
+    ${editSection("💬","green","Conversation points","conv_"+st.id,"Recent wins to celebrate · platform updates · focus areas · personal topics (trips, collections)…")}
+
+    <div class="section"><div class="section-hd"><span class="mk purple">🧭</span><h2>Coaching approach</h2></div>
       <div class="card editwrap">
-        <p class="seedhint">${st.focus?`Starter: <b>${esc(st.focus)}</b> is ${esc(st.name.split(' ')[0])}'s focus area from the MAP data. `:""}Add what you learn once sessions begin — approach, relationship notes, what to come prepared with.</p>
-        <label class="mini" for="notes-${esc(st.id)}">Your notes</label>
-        <textarea class="field" id="notes-${esc(st.id)}" rows="5" data-notes="${esc(st.id)}" placeholder="Coaching approach · relationship building · come prepared with…">${esc(notes)}</textarea>
+        <label class="mini">Coaching style</label>
+        <textarea class="field" rows="2" data-edit="style_${st.id}" placeholder="High standards + high support — how it looks for ${first}…">${esc(store.get("style_"+st.id,""))}</textarea>
+        <label class="mini" style="margin-top:12px">Strengths</label>
+        <textarea class="field" rows="2" data-edit="strn_${st.id}" placeholder="What ${first} does well…">${esc(store.get("strn_"+st.id,""))}</textarea>
+        <label class="mini" style="margin-top:12px">Struggles</label>
+        <textarea class="field" rows="2" data-edit="strg_${st.id}" placeholder="Where ${first} needs support…">${esc(store.get("strg_"+st.id,""))}</textarea>
       </div></div>
 
-    <div class="section"><div class="section-hd"><span class="mk green">🎯</span><h2>Current goal</h2></div>
+    <div class="section"><div class="section-hd"><span class="mk yellow">🎯</span><h2>Current goal</h2></div>
       <div class="card editwrap">
         <label class="mini" for="goal-${esc(st.id)}">One clear goal</label>
-        <input class="field" id="goal-${esc(st.id)}" data-goal="${esc(st.id)}" value="${esc(goal)}" placeholder="What are you working toward with ${esc(st.name.split(' ')[0])}?">
+        <input class="field" id="goal-${esc(st.id)}" data-goal="${esc(st.id)}" value="${esc(goal)}" placeholder="What are you working toward with ${first}?">
+      </div></div>
+
+    ${editSection("📁","blue","Saved for "+st.name.split(' ')[0],"art_"+st.id,"Paste links — Cowork projects, games, session plans, docs (one per line)…")}
+
+    <div class="section"><div class="section-hd"><span class="mk pink">📝</span><h2>Coach notes</h2></div>
+      <div class="card editwrap">
+        <p class="seedhint">${st.focus?`From the MAP data, <b>${esc(st.focus)}</b> is ${first}'s focus area. `:""}Your running notes as sessions begin.</p>
+        <textarea class="field" rows="4" data-notes="${esc(st.id)}" placeholder="Anything else worth remembering…">${esc(notes)}</textarea>
       </div></div>`;
 }
-
 /* ---------- GAME PLAN ---------- */
 function renderPlan(){
   const now=new Date();
@@ -514,6 +535,7 @@ document.body.addEventListener("input",e=>{
   const t=e.target;
   if(t.dataset.notes) store.set("notes_"+t.dataset.notes,t.value);
   else if(t.dataset.goal) store.set("goal_"+t.dataset.goal,t.value);
+  else if(t.dataset.edit) store.set(t.dataset.edit,t.value);
   else if(t.dataset.ts) store.set("ts_"+t.dataset.ts,t.value);
 });
 document.body.addEventListener("keydown",e=>{
