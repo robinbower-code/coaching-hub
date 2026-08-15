@@ -99,6 +99,8 @@ main{max-width:var(--maxw); margin:0 auto; padding:30px 22px 40px; min-height:60
 .badge{display:inline-block; font-size:.68rem; font-weight:800; letter-spacing:.02em; padding:2px 9px; border-radius:999px; margin-top:6px}
 .badge.tts{background:var(--light-yellow); color:var(--yellow-deep)}
 .badge.coach{background:var(--light-green); color:var(--green-deep)}
+.squad{display:inline-flex; align-items:center; gap:6px; font-weight:800; font-size:.68rem; letter-spacing:.02em; padding:3px 10px; border-radius:999px}
+.sqdot{width:8px; height:8px; border-radius:50%; display:inline-block; flex:0 0 auto}
 
 .addcard{border:2px dashed var(--border); border-radius:20px; padding:18px; display:flex; align-items:center; gap:14px;
   cursor:pointer; color:var(--purple-deep); font-weight:700; background:var(--light-grey)}
@@ -252,13 +254,16 @@ dialog::backdrop{background:rgba(29,22,64,.4); backdrop-filter:blur(3px)}
    edited live in the page and save in your browser.
    ============================================================ */
 const SEED = [
-  { id:"s1", name:"J. G.", grade:"4", program:"Full", advisor:"", enrolled:"", tested:"", tts:false, coaching:false, focus:"", scores:null, note:"" },
-  { id:"s2", name:"A. D.", grade:"4", program:"Full", advisor:"", enrolled:"", tested:"", tts:false, coaching:false, focus:"", scores:null, note:"" },
-  { id:"s3", name:"D. S.", grade:"6", program:"Full", advisor:"", enrolled:"", tested:"", tts:false, coaching:false, focus:"", scores:null, note:"" },
-  { id:"s4", name:"H. G.", grade:"7", program:"Full", advisor:"", enrolled:"", tested:"", tts:false, coaching:false, focus:"", scores:null, note:"" },
-  { id:"s5", name:"J. P.", grade:"7", program:"Full", advisor:"", enrolled:"", tested:"", tts:false, coaching:false, focus:"", scores:null, note:"" },
-  { id:"s6", name:"M. J.", grade:"5", program:"Full", advisor:"", enrolled:"", tested:"", tts:false, coaching:false, focus:"", scores:null, note:"" },
-  { id:"s7", name:"V. D.", grade:"7", program:"Full", advisor:"", enrolled:"", tested:"", tts:false, coaching:false, focus:"", scores:null, note:"" }
+  { id:"s1", name:"J. G.", grade:"4", program:"Full", advisor:"", squad:"Green", enrolled:"", tested:"", tts:false, coaching:false, focus:"", scores:null, note:"" },
+  { id:"s2", name:"A. D.", grade:"4", program:"Full", advisor:"", squad:"Blue", enrolled:"", tested:"", tts:false, coaching:false, focus:"", scores:null, note:"" },
+  { id:"s3", name:"A. G.", grade:"5", program:"Full", advisor:"", squad:"Blue", enrolled:"", tested:"", tts:false, coaching:false, focus:"", scores:null, note:"" },
+  { id:"s4", name:"D. S.", grade:"6", program:"Full", advisor:"", squad:"Blue", enrolled:"", tested:"", tts:false, coaching:false, focus:"", scores:null, note:"" },
+  { id:"s5", name:"H. G.", grade:"7", program:"Full", advisor:"", squad:"Blue", enrolled:"", tested:"", tts:false, coaching:false, focus:"", scores:null, note:"" },
+  { id:"s6", name:"J. P.", grade:"7", program:"Full", advisor:"", squad:"Orange", enrolled:"", tested:"", tts:false, coaching:false, focus:"", scores:null, note:"" },
+  { id:"s7", name:"K. K.", grade:"6", program:"Full", advisor:"", squad:"Blue", enrolled:"", tested:"", tts:false, coaching:false, focus:"", scores:null, note:"" },
+  { id:"s8", name:"M. J.", grade:"5", program:"Full", advisor:"", squad:"Red", enrolled:"", tested:"", tts:false, coaching:false, focus:"", scores:null, note:"" },
+  { id:"s9", name:"R. O.", grade:"5", program:"Full", advisor:"", squad:"Purple", enrolled:"", tested:"", tts:false, coaching:false, focus:"", scores:null, note:"" },
+  { id:"s10", name:"V. D.", grade:"7", program:"Full", advisor:"", squad:"", enrolled:"", tested:"", tts:false, coaching:false, focus:"", scores:null, note:"" }
 ];
 const COACH_START = "the week of Aug 24";
 const PUBLIC = true;
@@ -266,6 +271,14 @@ const PUBLIC = true;
 const NOTION = [];
 const CONTACTS = [];
 const AVATAR_COLORS=["#6C2BD9","#2F6FFF","#00C48C","#FF3D8B","#FFB800","#7C4DFF","#00A3B4"];
+const SQUADS={
+  Green:{solid:"#00C48C",bg:"var(--light-green)",fg:"var(--green-deep)"},
+  Blue:{solid:"#2F6FFF",bg:"var(--light-blue)",fg:"var(--blue-deep)"},
+  Orange:{solid:"#E8730C",bg:"#FFE7CC",fg:"#B35A00"},
+  Red:{solid:"#E5484D",bg:"var(--light-red)",fg:"var(--red-deep)"},
+  Purple:{solid:"#6C2BD9",bg:"var(--light-purple)",fg:"var(--purple-deep)"}
+};
+function squadChip(sq){ if(!sq||!SQUADS[sq]) return ""; const c=SQUADS[sq]; return `<span class="squad" style="background:${c.bg};color:${c.fg}"><span class="sqdot" style="background:${c.solid}"></span>${esc(sq)} Squad</span>`; }
 
 /* ---------- storage ---------- */
 const K="rch2_";
@@ -276,8 +289,8 @@ function roster(){return SEED.concat(getAdded());}
 function byId(id){return roster().find(s=>s.id===id);}
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function initials(n){const p=n.trim().split(/\s+/);return ((p[0]||"")[0]||"")+((p[1]||"")[0]||"");}
-function avColor(id){let h=0;for(const c of id)h=(h*31+c.charCodeAt(0))>>>0;return AVATAR_COLORS[h%AVATAR_COLORS.length];}
-function avatar(st,cls){return `<span class="avatar ${cls||''}" style="background:${avColor(st.id)}">${esc(initials(st.name).toUpperCase())}</span>`;}
+function avColor(st){ if(st.squad && SQUADS[st.squad]) return SQUADS[st.squad].solid; let h=0; for(const c of st.id) h=(h*31+c.charCodeAt(0))>>>0; return AVATAR_COLORS[h%AVATAR_COLORS.length];}
+function avatar(st,cls){return `<span class="avatar ${cls||''}" style="background:${avColor(st)}">${esc(initials(st.name).toUpperCase())}</span>`;}
 const SUBJECTS=["Math","Reading","Language","Science"];
 function ord(n){const s=["th","st","nd","rd"],v=n%100;return s[(v-20)%10]||s[v]||s[0];}
 
@@ -303,12 +316,12 @@ function renderHome(){
 function renderStudents(){
   const cards=roster().map(st=>{
     const st2 = st.scores ? `<b>Grade ${esc(st.grade)}</b> · ${esc(st.program)} Program` : `<b>Grade ${esc(st.grade)||'—'}</b> · added by you`;
-    const badges=(st.tts?`<span class="badge tts">TTS</span> `:"")+(st.coaching?`<span class="badge coach">Coaching</span>`:"");
+    const badges=[squadChip(st.squad), st.tts?`<span class="badge tts">TTS</span>`:"", st.coaching?`<span class="badge coach">Coaching</span>`:""].filter(Boolean).join(" ");
     return `<button class="card scard" data-student="${esc(st.id)}">
       ${avatar(st)}
       <div class="who"><h3>${esc(st.name)}</h3>
         <div class="st">${st2}<br>Coaching starts ${esc(COACH_START)}</div>
-        ${badges?`<div>${badges}</div>`:""}
+        ${badges?`<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:5px">${badges}</div>`:""}
       </div>
     </button>`;
   }).join("");
@@ -343,6 +356,7 @@ function renderStudent(id){
   const rows=[
     ["Program", st.program?esc(st.program)+" Program":"—"],
     ["Grade", "Grade "+esc(st.grade)],
+    ["Squad", st.squad?esc(st.squad)+" Squad":"—"],
     ["Program advisor", esc(st.advisor||"—")],
     ["Enrolled", esc(st.enrolled||"—")],
     ["Coaching", "First session "+esc(COACH_START)]
@@ -370,7 +384,7 @@ function renderStudent(id){
   host.innerHTML=`
     <button class="backlink" data-nav="students">← Back to Student Hub</button>
     <div class="op-head">${avatar(st)}
-      <div><h1>${esc(st.name)}</h1><div class="sub">Grade ${esc(st.grade)} · ${esc(st.program)} Program${st.focus?` · focus: ${esc(st.focus)}`:""}</div></div>
+      <div><h1>${esc(st.name)}</h1><div class="sub">Grade ${esc(st.grade)} · ${esc(st.program)} Program${st.focus?` · focus: ${esc(st.focus)}`:""}</div>${st.squad?`<div style="margin-top:7px">${squadChip(st.squad)}</div>`:""}</div>
     </div>
     <div class="card rows">${rows}</div>
 
@@ -480,7 +494,7 @@ function show(){
   else if(view==="wins")renderWins();
   else if(view==="troubleshoot")renderTroubleshoot();
   document.getElementById("pagechip").textContent=CHIP[view];
-  const rb=`<span>Public preview — anonymized, no student data.</span><span class="dot">•</span><span>MAP &amp; calendar synced Aug 14, 2026.</span><span class="dot">•</span><span>${FOOT[view]}</span><span class="dot">•</span><button class="link" id="resetBtn">Reset my edits</button>`;
+  const rb=`<span>Public preview - anonymized, no student data.</span><span class="dot">•</span><span>MAP &amp; calendar synced Aug 15, 2026.</span><span class="dot">•</span><span>${FOOT[view]}</span><span class="dot">•</span><button class="link" id="resetBtn">Reset my edits</button>`;
   document.getElementById("footer").innerHTML=rb;
   window.scrollTo(0,0);
 }
