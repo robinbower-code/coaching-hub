@@ -349,8 +349,8 @@ function vsGrade(ge,gradeStr){
   if(d>-2) return `<span class="vs near">${d} behind</span>`;
   return `<span class="vs down">${d} behind</span>`;
 }
-function editSection(emoji, mk, title, key, ph){
-  const val=store.get(key,"");
+function editSection(emoji, mk, title, key, ph, seed){
+  const val=store.get(key, seed||"");
   return `<div class="section"><div class="section-hd"><span class="mk ${mk}">${emoji}</span><h2>${title}</h2></div>
     <div class="card editwrap"><textarea class="field" rows="4" data-edit="${key}" placeholder="${esc(ph)}">${esc(val)}</textarea></div></div>`;
 }
@@ -385,8 +385,8 @@ function renderStudent(id){
     snap=`<div class="card snap"><p class="note">${msg}</p></div>`;
   }
 
-  const goal=store.get("goal_"+st.id, st.focus?`Build steady confidence in ${st.focus}.`:"");
-  const notes=store.get("notes_"+st.id,"");
+  const goal=store.get("goal_"+st.id, st.goalSeed || (st.focus?`Build steady confidence in ${st.focus}.`:""));
+  const notes=store.get("notes_"+st.id, st.notesSeed||"");
 
   host.innerHTML=`
     <button class="backlink" data-nav="students">← Back to Student Hub</button>
@@ -397,18 +397,18 @@ function renderStudent(id){
 
     <div class="section"><div class="section-hd"><span class="mk blue">📊</span><h2>Academic snapshot</h2></div>${snap}</div>
 
-    ${editSection("❤️","pink","What motivates them","mot_"+st.id,"Rewards that land · interests & hobbies · what gets "+st.name.split(' ')[0]+" engaged…")}
+    ${editSection("❤️","pink","What motivates them","mot_"+st.id,"Rewards that land · interests & hobbies · what gets "+st.name.split(' ')[0]+" engaged…", st.mot||"")}
 
-    ${editSection("💬","green","Conversation points","conv_"+st.id,"Recent wins to celebrate · platform updates · focus areas · personal topics (trips, collections)…")}
+    ${editSection("💬","green","Conversation points","conv_"+st.id,"Recent wins to celebrate · platform updates · focus areas · personal topics (trips, collections)…", st.convo||"")}
 
     <div class="section"><div class="section-hd"><span class="mk purple">🧭</span><h2>Coaching approach</h2></div>
       <div class="card editwrap">
         <label class="mini">Coaching style</label>
-        <textarea class="field" rows="2" data-edit="style_${st.id}" placeholder="High standards + high support — how it looks for ${first}…">${esc(store.get("style_"+st.id,""))}</textarea>
+        <textarea class="field" rows="2" data-edit="style_${st.id}" placeholder="High standards + high support — how it looks for ${first}…">${esc(store.get("style_"+st.id, st.style||""))}</textarea>
         <label class="mini" style="margin-top:12px">Strengths</label>
-        <textarea class="field" rows="2" data-edit="strn_${st.id}" placeholder="What ${first} does well…">${esc(store.get("strn_"+st.id,""))}</textarea>
+        <textarea class="field" rows="2" data-edit="strn_${st.id}" placeholder="What ${first} does well…">${esc(store.get("strn_"+st.id, st.strengths||""))}</textarea>
         <label class="mini" style="margin-top:12px">Struggles</label>
-        <textarea class="field" rows="2" data-edit="strg_${st.id}" placeholder="Where ${first} needs support…">${esc(store.get("strg_"+st.id,""))}</textarea>
+        <textarea class="field" rows="2" data-edit="strg_${st.id}" placeholder="Where ${first} needs support…">${esc(store.get("strg_"+st.id, st.struggles||""))}</textarea>
       </div></div>
 
     <div class="section"><div class="section-hd"><span class="mk yellow">🎯</span><h2>Current goal</h2></div>
@@ -447,7 +447,7 @@ function renderPlan(){
 /* ---------- WINS & GOALS ---------- */
 function renderWins(){
   const cards=roster().map(st=>{
-    const goal=store.get("goal_"+st.id, st.focus?`Build steady confidence in ${st.focus}.`:"");
+    const goal=store.get("goal_"+st.id, st.goalSeed || (st.focus?`Build steady confidence in ${st.focus}.`:""));
     const wins=store.get("wins_"+st.id,[]);
     const wl=wins.length?`<ul class="wins-list">`+wins.map((w,i)=>`<li><span class="wdate">${esc(w.d)}</span><span class="wtxt">${esc(w.t)}</span><button data-delwin="${esc(st.id)}" data-idx="${i}" aria-label="Remove">×</button></li>`).join("")+`</ul>`
       :`<p class="wins-empty">No wins logged yet — capture the first one below.</p>`;
